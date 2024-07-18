@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Кликер Игра с Улучшениями и Таблицей Лидеров</title>
+    <title>Кликер</title>
     <style>
         body {
             display: flex;
@@ -100,7 +100,7 @@
         upgrade2Button.addEventListener('click', () => {
             if (score >= 50) {
                 score -= 50;
-                clickValue += 5;
+                clickValue += 2;
                 scoreDisplay.textContent = 'Счет: ' + score;
                 saveProgress();
             }
