@@ -62,6 +62,7 @@
     <script>
         let score = 0;
         let clickValue = 1;
+        let bonusPrice = 100;
         const clickerButton = document.getElementById('clicker');
         const scoreDisplay = document.getElementById('score');
         const upgrade1Button = document.getElementById('upgrade1');
@@ -69,9 +70,22 @@
         const bonusButton = document.getElementById('bonus');
         const leaderboardList = document.getElementById('leaderboardList');
 
+        // Загрузка сохраненного прогресса
+        window.onload = () => {
+            if (localStorage.getItem('score')) {
+                score = parseInt(localStorage.getItem('score'));
+                clickValue = parseInt(localStorage.getItem('clickValue'));
+                bonusPrice = parseInt(localStorage.getItem('bonusPrice')) || 100;
+                scoreDisplay.textContent = 'Счет: ' + score;
+                bonusButton.textContent = `Бонус (Цена: ${bonusPrice})`;
+            }
+            updateLeaderboard();
+        };
+
         clickerButton.addEventListener('click', () => {
             score += clickValue;
             scoreDisplay.textContent = 'Счет: ' + score;
+            saveProgress();
         });
 
         upgrade1Button.addEventListener('click', () => {
@@ -79,6 +93,7 @@
                 score -= 10;
                 clickValue += 1;
                 scoreDisplay.textContent = 'Счет: ' + score;
+                saveProgress();
             }
         });
 
@@ -87,19 +102,30 @@
                 score -= 50;
                 clickValue += 5;
                 scoreDisplay.textContent = 'Счет: ' + score;
+                saveProgress();
             }
         });
 
         bonusButton.addEventListener('click', () => {
-            if (score >= 100) {
-                score -= 100;
+            if (score >= bonusPrice) {
+                score -= bonusPrice;
+                bonusPrice = Math.floor(bonusPrice * 1.5); // Увеличение цены бонуса
+                bonusButton.textContent = `Бонус (Цена: ${bonusPrice})`;
                 scoreDisplay.textContent = 'Счет: ' + score;
                 setInterval(() => {
                     score += 10;
                     scoreDisplay.textContent = 'Счет: ' + score;
+                    saveProgress();
                 }, 1000);
+                saveProgress();
             }
         });
+
+        function saveProgress() {
+            localStorage.setItem('score', score);
+            localStorage.setItem('clickValue', clickValue);
+            localStorage.setItem('bonusPrice', bonusPrice);
+        }
 
         function updateLeaderboard() {
             let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
