@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clicker Game</title>
+    <title>Кликер Игра с Улучшениями и Таблицей Лидеров</title>
     <style>
         body {
             display: flex;
@@ -13,29 +13,119 @@
             background-color: #f0f0f0;
             font-family: Arial, sans-serif;
         }
-        .container {
-            text-align: center;
-        }
-        .button {
-            padding: 20px;
-            font-size: 20px;
-            margin-top: 20px;
+        #clicker {
+            padding: 20px 40px;
+            font-size: 24px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
             cursor: pointer;
+        }
+        #score {
+            margin-top: 20px;
+            font-size: 24px;
+        }
+        #shop {
+            margin-top: 20px;
+        }
+        .upgrade {
+            margin: 10px 0;
+        }
+        #leaderboard {
+            margin-top: 20px;
+            font-size: 18px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Clicker Game</h1>
-        <p id="score">Clicks: 0</p>
-        <button class="button" onclick="increment()">Click me!</button>
+    <div>
+        <button id="clicker">Кликни меня!</button>
+        <div id="score">Счет: 0</div>
+        <div id="shop">
+            <div class="upgrade">
+                <button id="upgrade1">Улучшение 1 (Цена: 10)</button>
+            </div>
+            <div class="upgrade">
+                <button id="upgrade2">Улучшение 2 (Цена: 50)</button>
+            </div>
+            <div class="upgrade">
+                <button id="bonus">Бонус (Цена: 100)</button>
+            </div>
+        </div>
+        <div id="leaderboard">
+            <h2>Таблица Лидеров</h2>
+            <ol id="leaderboardList"></ol>
+        </div>
     </div>
+
     <script>
-        let clicks = 0;
-        function increment() {
-            clicks++;
-            document.getElementById('score').innerText = 'Clicks: ' + clicks;
+        let score = 0;
+        let clickValue = 1;
+        const clickerButton = document.getElementById('clicker');
+        const scoreDisplay = document.getElementById('score');
+        const upgrade1Button = document.getElementById('upgrade1');
+        const upgrade2Button = document.getElementById('upgrade2');
+        const bonusButton = document.getElementById('bonus');
+        const leaderboardList = document.getElementById('leaderboardList');
+
+        clickerButton.addEventListener('click', () => {
+            score += clickValue;
+            scoreDisplay.textContent = 'Счет: ' + score;
+        });
+
+        upgrade1Button.addEventListener('click', () => {
+            if (score >= 10) {
+                score -= 10;
+                clickValue += 1;
+                scoreDisplay.textContent = 'Счет: ' + score;
+            }
+        });
+
+        upgrade2Button.addEventListener('click', () => {
+            if (score >= 50) {
+                score -= 50;
+                clickValue += 5;
+                scoreDisplay.textContent = 'Счет: ' + score;
+            }
+        });
+
+        bonusButton.addEventListener('click', () => {
+            if (score >= 100) {
+                score -= 100;
+                scoreDisplay.textContent = 'Счет: ' + score;
+                setInterval(() => {
+                    score += 10;
+                    scoreDisplay.textContent = 'Счет: ' + score;
+                }, 1000);
+            }
+        });
+
+        function updateLeaderboard() {
+            let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
+            leaderboardList.innerHTML = '';
+            leaderboard.forEach((entry, index) => {
+                let listItem = document.createElement('li');
+                listItem.textContent = `${index + 1}. ${entry.name}: ${entry.score}`;
+                leaderboardList.appendChild(listItem);
+            });
         }
+
+        function saveScore(name, score) {
+            let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
+            leaderboard.push({ name, score });
+            leaderboard.sort((a, b) => b.score - a.score);
+            leaderboard = leaderboard.slice(0, 10); // Сохраняем только топ-10
+            localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+            updateLeaderboard();
+        }
+
+        // Пример сохранения результата
+        saveScore('Игрок1', 150);
+        saveScore('Игрок2', 200);
+        saveScore('Игрок3', 50);
+
+        updateLeaderboard();
     </script>
 </body>
 </html>
