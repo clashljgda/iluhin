@@ -1,157 +1,36 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Кликер</title>
+    <title>Image Generator</title>
     <style>
         body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f0f0f0;
             font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
         }
-        #clicker {
-            padding: 20px 40px;
-            font-size: 24px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
+        input, button {
+            margin: 10px;
+            padding: 10px;
+            font-size: 16px;
         }
-        #score {
-            margin-top: 20px;
-            font-size: 24px;
-        }
-        #shop {
-            margin-top: 20px;
-        }
-        .upgrade {
-            margin: 10px 0;
-        }
-        #leaderboard {
-            margin-top: 20px;
-            font-size: 18px;
+        img {
+            max-width: 100%;
+            height: auto;
         }
     </style>
 </head>
 <body>
-    <div>
-        <button id="clicker">Кликни меня!</button>
-        <div id="score">Счет: 0</div>
-        <div id="shop">
-            <div class="upgrade">
-                <button id="upgrade1">Улучшение 1 (Цена: 10)</button>
-            </div>
-            <div class="upgrade">
-                <button id="upgrade2">Улучшение 2 (Цена: 50)</button>
-            </div>
-            <div class="upgrade">
-                <button id="bonus">Бонус (Цена: 100)</button>
-            </div>
-        </div>
-        <div id="leaderboard">
-            <h2>Таблица Лидеров</h2>
-            <ol id="leaderboardList"></ol>
-        </div>
-    </div>
+    <h1>Image Generator</h1>
+    <input type="text" id="query" placeholder="Enter text to generate image">
+    <button onclick="generateImage()">Generate Image</button>
+    <div id="imageContainer"></div>
 
-    <script>
-        let score = 0;
-        let clickValue = 1;
-        let bonusPrice = 100;
-        const clickerButton = document.getElementById('clicker');
-        const scoreDisplay = document.getElementById('score');
-        const upgrade1Button = document.getElementById('upgrade1');
-        const upgrade2Button = document.getElementById('upgrade2');
-        const bonusButton = document.getElementById('bonus');
-        const leaderboardList = document.getElementById('leaderboardList');
-
-        // Загрузка сохраненного прогресса
-        window.onload = () => {
-            if (localStorage.getItem('score')) {
-                score = parseInt(localStorage.getItem('score'));
-                clickValue = parseInt(localStorage.getItem('clickValue'));
-                bonusPrice = parseInt(localStorage.getItem('bonusPrice')) || 100;
-                scoreDisplay.textContent = 'Счет: ' + score;
-                bonusButton.textContent = `Бонус (Цена: ${bonusPrice})`;
-            }
-            updateLeaderboard();
-        };
-
-        clickerButton.addEventListener('click', () => {
-            score += clickValue;
-            scoreDisplay.textContent = 'Счет: ' + score;
-            saveProgress();
-        });
-
-        upgrade1Button.addEventListener('click', () => {
-            if (score >= 10) {
-                score -= 10;
-                clickValue += 1;
-                scoreDisplay.textContent = 'Счет: ' + score;
-                saveProgress();
-            }
-        });
-
-        upgrade2Button.addEventListener('click', () => {
-            if (score >= 50) {
-                score -= 50;
-                clickValue += 2;
-                scoreDisplay.textContent = 'Счет: ' + score;
-                saveProgress();
-            }
-        });
-
-        bonusButton.addEventListener('click', () => {
-            if (score >= bonusPrice) {
-                score -= bonusPrice;
-                bonusPrice = Math.floor(bonusPrice * 1.5); // Увеличение цены бонуса
-                bonusButton.textContent = `Бонус (Цена: ${bonusPrice})`;
-                scoreDisplay.textContent = 'Счет: ' + score;
-                setInterval(() => {
-                    score += 10;
-                    scoreDisplay.textContent = 'Счет: ' + score;
-                    saveProgress();
-                }, 1000);
-                saveProgress();
-            }
-        });
-
-        function saveProgress() {
-            localStorage.setItem('score', score);
-            localStorage.setItem('clickValue', clickValue);
-            localStorage.setItem('bonusPrice', bonusPrice);
-        }
-
-        function updateLeaderboard() {
-            let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
-            leaderboardList.innerHTML = '';
-            leaderboard.forEach((entry, index) => {
-                let listItem = document.createElement('li');
-                listItem.textContent = `${index + 1}. ${entry.name}: ${entry.score}`;
-                leaderboardList.appendChild(listItem);
-            });
-        }
-
-        function saveScore(name, score) {
-            let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
-            leaderboard.push({ name, score });
-            leaderboard.sort((a, b) => b.score - a.score);
-            leaderboard = leaderboard.slice(0, 10); // Сохраняем только топ-10
-            localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
-            updateLeaderboard();
-        }
-
-        // Пример сохранения результата
-        saveScore('Игрок1', 150);
-        saveScore('Игрок2', 200);
-        saveScore('Игрок3', 50);
-
-        updateLeaderboard();
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
