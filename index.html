@@ -3,34 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Generator</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-        }
-        input, button {
-            margin: 10px;
-            padding: 10px;
-            font-size: 16px;
-        }
-        img {
-            max-width: 100%;
-            height: auto;
-        }
-    </style>
+    <title>Low Stock Items</title>
 </head>
 <body>
-    <h1>Image Generator</h1>
-    <input type="text" id="query" placeholder="Enter text to generate image">
-    <button onclick="generateImage()">Generate Image</button>
-    <div id="imageContainer"></div>
+    <button id="checkStockBtn">Check Low Stock Items</button>
+    <ul id="lowStockList"></ul>
 
-    <script src="script.js"></script>
+    <script>
+        document.getElementById('checkStockBtn').addEventListener('click', function() {
+            fetch('/get_low_stock')
+                .then(response => response.json())
+                .then(data => {
+                    const list = document.getElementById('lowStockList');
+                    list.innerHTML = '';
+                    data.forEach(item => {
+                        const listItem = document.createElement('li');
+                        listItem.textContent = `${item.name}: ${item.quantity} left`;
+                        list.appendChild(listItem);
+                    });
+                });
+        });
+    </script>
 </body>
 </html>
