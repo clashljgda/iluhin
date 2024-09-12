@@ -3,25 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Low Stock Items</title>
+    <title>Low Stock Products</title>
 </head>
 <body>
-    <button id="checkStockBtn">Check Low Stock Items</button>
-    <ul id="lowStockList"></ul>
+    <h1>Low Stock Products</h1>
+    <button id="checkStockButton">Check Stock</button>
+    <ul id="productList"></ul>
 
     <script>
-        document.getElementById('checkStockBtn').addEventListener('click', function() {
-            fetch('/get_low_stock')
-                .then(response => response.json())
-                .then(data => {
-                    const list = document.getElementById('lowStockList');
-                    list.innerHTML = '';
-                    data.forEach(item => {
-                        const listItem = document.createElement('li');
-                        listItem.textContent = `${item.name}: ${item.quantity} left`;
-                        list.appendChild(listItem);
-                    });
+        document.getElementById('checkStockButton').addEventListener('click', function() {
+            fetch('https://api.moysklad.ru/api/remap/1.2/entity/product', {
+                headers: {
+                    'Authorization': 'Bearer 08ef5511f00e9ceefc5b24632a1af750d749a25e',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const products = data.rows.filter(product => product.stock < 5);
+                const productList = document.getElementById('productList');
+                productList.innerHTML = '';
+                products.forEach(product => {
+                    const li = document.createElement('li');
+                    li.textContent = `${product.name} - Stock: ${product.stock}`;
+                    productList.appendChild(li);
                 });
+            })
+            .catch(error => console.error('Error:', error));
         });
     </script>
 </body>
