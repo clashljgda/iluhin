@@ -1,35 +1,693 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Low Stock Products</title>
+    <title>Рыболовный прогноз</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #2c3e50);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 700px;
+            margin: 0 auto 20px;
+        }
+        
+        .api-panel {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px auto;
+            max-width: 700px;
+            text-align: center;
+        }
+        
+        .api-panel input {
+            padding: 10px 15px;
+            border-radius: 30px;
+            border: none;
+            width: 300px;
+            margin: 10px;
+            font-size: 1rem;
+        }
+        
+        .api-panel button {
+            background: #4cd137;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .api-panel button:hover {
+            background: #44bd32;
+            transform: scale(1.05);
+        }
+        
+        .content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        @media (min-width: 992px) {
+            .content {
+                flex-direction: row;
+            }
+        }
+        
+        .map-section {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        .forecast-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .weather-info {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        .location-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .coordinates {
+            font-size: 1.1rem;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-family: monospace;
+            margin-top: 10px;
+        }
+        
+        .current-weather {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .weather-icon {
+            text-align: center;
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .weather-icon img {
+            width: 80px;
+            height: 80px;
+        }
+        
+        .temperature {
+            font-size: 3.5rem;
+            font-weight: bold;
+        }
+        
+        .weather-details {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .detail {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .fishing-probability {
+            text-align: center;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+        
+        .probability-value {
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 10px 0;
+            color: #4cd137;
+        }
+        
+        .probability-bar {
+            height: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .probability-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00b09b, #96c93d);
+            border-radius: 10px;
+        }
+        
+        .forecast-title {
+            text-align: center;
+            margin: 15px 0;
+            font-size: 1.5rem;
+        }
+        
+        .forecast-cards {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .forecast-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s;
+        }
+        
+        .forecast-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .forecast-day {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #fbc531;
+        }
+        
+        .forecast-icon {
+            margin: 10px 0;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .forecast-icon img {
+            width: 50px;
+            height: 50px;
+        }
+        
+        .forecast-temp {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        
+        .forecast-probability {
+            font-size: 0.9rem;
+            color: #4cd137;
+            margin-top: 10px;
+        }
+        
+        #map {
+            height: 500px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .map-instruction {
+            text-align: center;
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+        
+        .fishing-tips {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        .tips-title {
+            margin-bottom: 15px;
+            color: #fbc531;
+            text-align: center;
+        }
+        
+        .tips-list {
+            padding-left: 20px;
+        }
+        
+        .tips-list li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        
+        .highlight {
+            color: #fbc531;
+            font-weight: bold;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-size: 1.2rem;
+        }
+        
+        .loading i {
+            animation: spin 1s linear infinite;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .forecast-cards {
+                flex-direction: column;
+            }
+            
+            .current-weather {
+                flex-direction: column;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            #map {
+                height: 400px;
+            }
+            
+            .api-panel input {
+                width: 100%;
+                margin: 10px 0;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>Low Stock Products</h1>
-    <button id="checkStockButton">Check Stock</button>
-    <ul id="productList"></ul>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-fish"></i> Рыболовный Прогноз</h1>
+            <p class="subtitle">Выберите место на карте, чтобы увидеть прогноз погоды и вероятность успешной рыбалки на ближайшие 3 дня</p>
+            
+            <div class="api-panel">
+                <p>Для работы сайта требуется API ключ от OpenWeatherMap</p>
+                <input type="text" id="api-key" placeholder="Введите ваш API ключ">
+                <button id="save-api-key">Сохранить ключ</button>
+                <p style="margin-top: 10px; font-size: 0.9rem;">Получите бесплатный ключ на <a href="https://home.openweathermap.org/api_keys" target="_blank" style="color: #4cd137;">openweathermap.org</a></p>
+            </div>
+        </header>
+        
+        <div class="content">
+            <div class="map-section">
+                <div id="map"></div>
+                <p class="map-instruction">Кликните на карте, чтобы выбрать место для рыбалки</p>
+            </div>
+            
+            <div class="forecast-section">
+                <div class="weather-info">
+                    <div class="location-info">
+                        <h2>Выберите место на карте</h2>
+                        <div class="coordinates">55.7558° с.ш., 37.6173° в.д.</div>
+                    </div>
+                    
+                    <div class="current-weather">
+                        <div class="weather-icon">
+                            <i class="fas fa-sun"></i>
+                        </div>
+                        <div class="temperature">--°C</div>
+                        <div class="weather-details">
+                            <div class="detail">
+                                <i class="fas fa-wind"></i>
+                                <span>Ветер: -- м/с</span>
+                            </div>
+                            <div class="detail">
+                                <i class="fas fa-tint"></i>
+                                <span>Влажность: --%</span>
+                            </div>
+                            <div class="detail">
+                                <i class="fas fa-cloud"></i>
+                                <span>Облачность: --%</span>
+                            </div>
+                            <div class="detail">
+                                <i class="fas fa-compress"></i>
+                                <span>Давление: -- мм рт.ст.</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="fishing-probability">
+                        <h3>Вероятность поймать рыбу сегодня</h3>
+                        <div class="probability-value">--%</div>
+                        <div class="probability-bar">
+                            <div class="probability-fill" style="width: 0%;"></div>
+                        </div>
+                        <p>Выберите место на карте для получения прогноза</p>
+                    </div>
+                </div>
+                
+                <div class="fishing-tips">
+                    <h3 class="tips-title"><i class="fas fa-lightbulb"></i> Советы для рыбалки</h3>
+                    <ul class="tips-list">
+                        <li>Лучшее время для ловли: <span class="highlight">утро (5:00-9:00)</span> и <span class="highlight">вечер (18:00-21:00)</span></li>
+                        <li>Рекомендуемые приманки: <span class="highlight">воблеры, блесны, силиконовые приманки</span></li>
+                        <li>Активность рыбы зависит от температуры воды, атмосферного давления и фазы луны</li>
+                        <li>Одевайтесь по погоде и используйте солнцезащитные средства</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <h2 class="forecast-title">Прогноз на 3 дня</h2>
+        <div class="forecast-cards">
+            <div class="forecast-card">
+                <div class="forecast-day">--</div>
+                <div class="forecast-icon"><i class="fas fa-cloud"></i></div>
+                <div class="forecast-temp">--°C</div>
+                <div>Ветер: -- м/с</div>
+                <div class="forecast-probability">Вероятность: --%</div>
+            </div>
+            <div class="forecast-card">
+                <div class="forecast-day">--</div>
+                <div class="forecast-icon"><i class="fas fa-cloud"></i></div>
+                <div class="forecast-temp">--°C</div>
+                <div>Ветер: -- м/с</div>
+                <div class="forecast-probability">Вероятность: --%</div>
+            </div>
+            <div class="forecast-card">
+                <div class="forecast-day">--</div>
+                <div class="forecast-icon"><i class="fas fa-cloud"></i></div>
+                <div class="forecast-temp">--°C</div>
+                <div>Ветер: -- м/с</div>
+                <div class="forecast-probability">Вероятность: --%</div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Данные о погоде предоставлены сервисом OpenWeatherMap</p>
+            <p>© 2023 Рыболовный Прогноз | Для заядлых рыбаков</p>
+        </div>
+    </div>
 
     <script>
-        document.getElementById('checkStockButton').addEventListener('click', function() {
-            fetch('https://api.moysklad.ru/api/remap/1.2/entity/product', {
-                headers: {
-                    'Authorization': 'Bearer 08ef5511f00e9ceefc5b24632a1af750d749a25e',
-                    'Content-Type': 'application/json'
+        // API ключ для OpenWeatherMap
+        let apiKey = '';
+        
+        // Инициализация карты
+        const map = L.map('map').setView([55.7558, 37.6173], 5);
+        
+        // Добавление слоя карты
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // Добавление маркера
+        let marker = L.marker([55.7558, 37.6173], {
+            draggable: true,
+            title: "Выбранное место для рыбалки"
+        }).addTo(map);
+        
+        // Элементы DOM
+        const apiKeyInput = document.getElementById('api-key');
+        const saveApiKeyBtn = document.getElementById('save-api-key');
+        
+        // Проверка сохраненного API ключа
+        if (localStorage.getItem('fishing_forecast_api_key')) {
+            apiKey = localStorage.getItem('fishing_forecast_api_key');
+            apiKeyInput.value = apiKey;
+        }
+        
+        // Сохранение API ключа
+        saveApiKeyBtn.addEventListener('click', function() {
+            apiKey = apiKeyInput.value.trim();
+            if (apiKey) {
+                localStorage.setItem('fishing_forecast_api_key', apiKey);
+                alert('API ключ успешно сохранен!');
+                // Обновляем данные для текущей позиции
+                const position = marker.getLatLng();
+                updateWeatherData(position.lat, position.lng);
+            } else {
+                alert('Пожалуйста, введите API ключ');
+            }
+        });
+        
+        // Обработчик перемещения маркера
+        marker.on('dragend', function(event) {
+            const position = marker.getLatLng();
+            updateWeatherData(position.lat, position.lng);
+        });
+        
+        // Обработчик клика по карте
+        map.on('click', function(event) {
+            const {lat, lng} = event.latlng;
+            marker.setLatLng([lat, lng]);
+            updateWeatherData(lat, lng);
+        });
+        
+        // Функция обновления данных о погоде и рыбалке
+        async function updateWeatherData(lat, lng) {
+            if (!apiKey) {
+                alert('Пожалуйста, введите API ключ OpenWeatherMap');
+                return;
+            }
+            
+            // Показываем загрузку
+            document.querySelector('.fishing-probability p').innerHTML = '<div class="loading"><i class="fas fa-spinner"></i><br>Загрузка данных...</div>';
+            
+            try {
+                // Запрос текущей погоды
+                const currentWeatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${apiKey}&units=metric&lang=ru`;
+                const currentResponse = await fetch(currentWeatherUrl);
+                const currentData = await currentResponse.json();
+                
+                // Запрос прогноза на 5 дней
+                const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lng}&appid=${apiKey}&units=metric&lang=ru`;
+                const forecastResponse = await fetch(forecastUrl);
+                const forecastData = await forecastResponse.json();
+                
+                // Обновляем данные на странице
+                updateCurrentWeather(currentData, forecastData);
+                updateThreeDayForecast(forecastData);
+            } catch (error) {
+                console.error('Ошибка при получении данных:', error);
+                document.querySelector('.fishing-probability p').textContent = 'Ошибка при загрузке данных. Проверьте API ключ и соединение.';
+            }
+        }
+        
+        // Обновление данных текущей погоды
+        function updateCurrentWeather(currentData, forecastData) {
+            // Обновление координат
+            document.querySelector('.coordinates').textContent = 
+                `${currentData.coord.lat.toFixed(4)}° с.ш., ${currentData.coord.lon.toFixed(4)}° в.д.`;
+            
+            // Обновление местоположения
+            document.querySelector('.location-info h2').textContent = 
+                currentData.name ? currentData.name + ', ' + (currentData.sys.country || '') : 
+                `Широта: ${currentData.coord.lat.toFixed(2)}, Долгота: ${currentData.coord.lon.toFixed(2)}`;
+            
+            // Обновление текущей погоды
+            document.querySelector('.temperature').textContent = `${Math.round(currentData.main.temp)}°C`;
+            
+            // Иконка погоды
+            const iconUrl = `https://openweathermap.org/img/wn/${currentData.weather[0].icon}@2x.png`;
+            const weatherIcon = document.querySelector('.weather-icon');
+            weatherIcon.innerHTML = `<img src="${iconUrl}" alt="${currentData.weather[0].description}">`;
+            
+            // Детали погоды
+            document.querySelectorAll('.weather-details span')[0].textContent = 
+                `Ветер: ${currentData.wind.speed} м/с`;
+            document.querySelectorAll('.weather-details span')[1].textContent = 
+                `Влажность: ${currentData.main.humidity}%`;
+            document.querySelectorAll('.weather-details span')[2].textContent = 
+                `Облачность: ${currentData.clouds.all}%`;
+            document.querySelectorAll('.weather-details span')[3].textContent = 
+                `Давление: ${Math.round(currentData.main.pressure * 0.750064)} мм рт.ст.`;
+            
+            // Расчет вероятности рыбалки
+            const fishingProbability = calculateFishingProbability(
+                currentData.main.temp,
+                currentData.wind.speed,
+                currentData.main.pressure,
+                currentData.clouds.all
+            );
+            
+            document.querySelector('.probability-value').textContent = `${fishingProbability}%`;
+            document.querySelector('.probability-fill').style.width = `${fishingProbability}%`;
+            
+            // Обновление текста рекомендаций
+            let advice = "Хорошие условия для рыбалки. ";
+            if (fishingProbability > 80) {
+                advice = "Отличные условия для рыбалки! Рекомендуем использовать спиннинг и воблеры.";
+            } else if (fishingProbability > 60) {
+                advice = "Хорошие условия для рыбалки. Попробуйте фидер или поплавочную удочку.";
+            } else if (fishingProbability > 40) {
+                advice = "Условия для рыбалки средние. Экспериментируйте с приманками.";
+            } else {
+                advice = "Условия для рыбалки не самые благоприятные. Может, перенести на другой день?";
+            }
+            document.querySelector('.fishing-probability p').textContent = advice;
+        }
+        
+        // Расчет вероятности удачной рыбалки
+        function calculateFishingProbability(temp, wind, pressure, cloudiness) {
+            let probability = 50; // базовая вероятность
+            
+            // Влияние температуры
+            if (temp >= 15 && temp <= 25) probability += 20;
+            else if (temp >= 10 && temp < 15) probability += 10;
+            else if (temp > 25 && temp <= 30) probability += 5;
+            else probability -= 15;
+            
+            // Влияние ветра
+            if (wind < 3) probability += 15;
+            else if (wind < 6) probability += 5;
+            else if (wind < 10) probability -= 10;
+            else probability -= 20;
+            
+            // Влияние давления
+            if (pressure >= 755 && pressure <= 765) probability += 15;
+            else if (pressure >= 750 && pressure < 755) probability += 5;
+            else if (pressure > 765 && pressure <= 775) probability += 5;
+            else probability -= 10;
+            
+            // Влияние облачности
+            if (cloudiness >= 40 && cloudiness <= 80) probability += 10;
+            else if (cloudiness > 80) probability -= 5;
+            
+            // Ограничение вероятности от 5% до 95%
+            probability = Math.max(5, Math.min(probability, 95));
+            
+            return Math.round(probability);
+        }
+        
+        // Обновление прогноза на 3 дня
+        function updateThreeDayForecast(forecastData) {
+            const forecastCards = document.querySelectorAll('.forecast-card');
+            const days = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+            
+            // Фильтрация прогноза для получения одного значения на день (12:00)
+            const dailyForecasts = {};
+            forecastData.list.forEach(item => {
+                const date = new Date(item.dt * 1000);
+                const dayKey = date.toISOString().split('T')[0];
+                const hour = date.getHours();
+                
+                // Используем прогноз на 12:00 дня
+                if (hour === 12) {
+                    dailyForecasts[dayKey] = item;
                 }
-            })
-            .then(response => response.json())
-            .then(data => {
-                const products = data.rows.filter(product => product.stock < 5);
-                const productList = document.getElementById('productList');
-                productList.innerHTML = '';
-                products.forEach(product => {
-                    const li = document.createElement('li');
-                    li.textContent = `${product.name} - Stock: ${product.stock}`;
-                    productList.appendChild(li);
-                });
-            })
-            .catch(error => console.error('Error:', error));
+            });
+            
+            // Получаем прогноз на следующие 3 дня
+            const forecastDays = Object.keys(dailyForecasts).sort().slice(0, 3);
+            
+            forecastDays.forEach((day, index) => {
+                const forecast = dailyForecasts[day];
+                const date = new Date(forecast.dt * 1000);
+                const dayName = days[date.getDay()];
+                
+                // Обновление карточки
+                const card = forecastCards[index];
+                card.querySelector('.forecast-day').textContent = dayName;
+                
+                // Иконка погоды
+                const iconUrl = `https://openweathermap.org/img/wn/${forecast.weather[0].icon}@2x.png`;
+                card.querySelector('.forecast-icon').innerHTML = `<img src="${iconUrl}" alt="${forecast.weather[0].description}">`;
+                
+                card.querySelector('.forecast-temp').textContent = `${Math.round(forecast.main.temp)}°C`;
+                card.querySelector('.forecast-card > div:nth-child(4)').textContent = 
+                    `Ветер: ${forecast.wind.speed} м/с`;
+                
+                // Расчет вероятности для дня
+                const fishingProbability = calculateFishingProbability(
+                    forecast.main.temp,
+                    forecast.wind.speed,
+                    forecast.main.pressure,
+                    forecast.clouds.all
+                );
+                
+                card.querySelector('.forecast-probability').textContent = `Вероятность: ${fishingProbability}%`;
+            });
+        }
+        
+        // Инициализация данных при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            if (apiKey) {
+                updateWeatherData(55.7558, 37.6173);
+            }
         });
     </script>
 </body>
